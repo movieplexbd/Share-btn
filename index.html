@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies</title>
+    <style>
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px;
+        }
+
+        .movie-card {
+            width: 300px;
+            margin: 10px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+
+        .share-button {
+            background-color: #1877F2;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBsz-82MDaibWnIBUpoykrZHyJW7UMedX8",
+            authDomain: "movies-bee24.firebaseapp.com",
+            databaseURL: "https://movies-bee24-default-rtdb.firebaseio.com",
+            projectId: "movies-bee24",
+            storageBucket: "movies-bee24.appspot.com",
+            messagingSenderId: "1080659811750",
+            appId: "1:1080659811750:web:c1ef7d4dacc3ab17edc367"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const movieListContainer = document.getElementById('movie-list');
+
+        // Load Movies from Firebase
+        function loadMovies() {
+            const moviesRef = ref(db, 'movies');
+            onValue(moviesRef, (snapshot) => {
+                movieListContainer.innerHTML = '';
+                snapshot.forEach((childSnapshot) => {
+                    const movie = childSnapshot.val();
+                    const movieCard = document.createElement('div');
+                    movieCard.className = 'movie-card';
+
+                    const movieImage = document.createElement('img');
+                    movieImage.src = movie.fileURL;
+                    movieImage.alt = movie.name;
+
+                    const movieInfo = document.createElement('div');
+                    movieInfo.innerHTML = `<h5>${movie.name} (${movie.year})</h5>`;
+
+                    // Share Button
+                    const shareButton = document.createElement('button');
+                    shareButton.className = 'share-button';
+                    shareButton.textContent = 'Share This Movie';
+                    shareButton.addEventListener('click', () => {
+                        shareMovie(movieCard); // Pass the entire movie card to share
+                    });
+
+                    // Append elements
+                    movieCard.appendChild(movieImage);
+                    movieCard.appendChild(movieInfo);
+                    movieCard.appendChild(shareButton);
+                    movieListContainer.appendChild(movieCard);
+                });
+            });
+        }
+
+        // Share Movie Function
+        function shareMovie(movieCard) {
+            const cardImage = movieCard.querySelector('img').src; // Get the image source
+            const cardTitle = movieCard.querySelector('h5').innerText; // Get the movie title
+
+            const shareData = {
+                title: cardTitle,
+                text: `Check out this movie: ${cardTitle}`,
+                url: window.location.href // Share the current page URL
+            };
+
+            if (navigator.canShare && navigator.canShare({ url: shareData.url })) {
+                navigator.share(shareData)
+                    .then(() => console.log('Movie shared successfully!'))
+                    .catch((error) => console.error('Error sharing the movie:', error));
+            } else {
+                alert('Sharing not supported in this browser.');
+            }
+        }
+
+        // Load Movies on Page Load
+        window.onload = loadMovies;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div id="movie-list"></div>
+    </div>
+</body>
+</html>
